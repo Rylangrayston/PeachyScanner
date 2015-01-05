@@ -13,6 +13,13 @@ def xyColorPicker(event,y,x,flags,param):
         return([x,y])
 
     
+    if event == cv2.EVENT_RBUTTONDOWN:
+        global xPositionOfEncoderPixle, yPositionOfEncoderPixle
+        xPositionOfEncoderPixle = x
+        yPositionOfEncoderPixle = y
+
+
+        return([x,y])
     
 
 
@@ -57,6 +64,9 @@ def setCenterOfRotation(x):
     print(x, centerOfRotation, 'track ball has changed center of Rotation')
     
 
+def setEncoderPixleValue(x):
+    pass
+
 def setSomething(x):
     something = x*.001
     print(x, something, 'track ball has something')
@@ -78,6 +88,11 @@ cv2.createTrackbar('Satruation','image',0,1000,setSaturation)
 cv2.createTrackbar('Hue','image',0,1000,setHue)
 cv2.createTrackbar('Gain','image',0,1000,setGain)
 cv2.createTrackbar('Center Of Rotation','image',0,1000,setCenterOfRotation)
+cv2.createTrackbar('Encoder Pixle Value','image',0,256*3 +5,setEncoderPixleValue)
+cv2.createTrackbar('Encoder Pixle Debounce','image',0,1000,nothing)
+cv2.createTrackbar('Encoder Pixle Lower Threshold','image',0,1000,nothing)
+cv2.createTrackbar('Encoder Pixle Upper Threshold','image',0,1000,nothing)
+cv2.createTrackbar('Number Of Encode Spots Detected','image',0,1000,nothing)
 cv2.createTrackbar('something','image',0,1000,setSomething)
 
 # create switch for ON/OFF functionality
@@ -105,12 +120,18 @@ firstLoop = True
 cv2.namedWindow('LiveFeedWindow')
 cv2.setMouseCallback('LiveFeedWindow',xyColorPicker)
 centerOfRotation = 500
+xPositionOfEncoderPixle = 100
+yPositionOfEncoderPixle = 100
+encodeSpotDark = True
+numberOfEncodeSpotsDetected = 0
 
 while(True):
    
-    growingNumber = 0 + growingNumber
+    growingNumber = 1 + growingNumber
     if growingNumber == 999:
         growingNumber = 0
+
+
 ############ run track ball window ################ 
 
     cv2.imshow('image',img)
@@ -130,13 +151,19 @@ while(True):
     saturation = cv2.getTrackbarPos('Saturation','image')
     hue = cv2.getTrackbarPos('Hue','image')
     gain = cv2.getTrackbarPos('Gain','image')
-    somthing = cv2.getTrackbarPos('Center Of Rotation','image')
+    centerOfRotation = cv2.getTrackbarPos('Center Of Rotation','image')
+    #encoderPixleValue = cv2.getTrackbarPos('Encoder Pixle Value','image')
+    encoderPixleDebounce = cv2.getTrackbarPos('Encoder Pixle Debounce','image')
+    encoderPixleLowerThreshold = cv2.getTrackbarPos('Encoder Pixle Lower Threshold','image')
+    encoderPixleUpperThreshold = cv2.getTrackbarPos('Encoder Pixle Upper Threshold','image')
     somthing = cv2.getTrackbarPos('somthing','image')
+    
     s = cv2.getTrackbarPos(switch,'image')
 
     #cv2.setTrackbarPos('Brightness','image', growingNumber)
+    
 
-
+    
     if s == 0:
         img[:] = 0
     else:
@@ -152,7 +179,24 @@ while(True):
     
     # Draw center Line:
     cv2.rectangle(frame,(centerOfRotation-2,5000),(centerOfRotation,0),(0,255,0),-1)
+    # get value of encoder pixle
+    encoderPixleValue = int(frame[xPositionOfEncoderPixle,yPositionOfEncoderPixle][0]) + int(frame[xPositionOfEncoderPixle,yPositionOfEncoderPixle][1]) + int(frame[xPositionOfEncoderPixle,yPositionOfEncoderPixle][2])  
+    cv2.setTrackbarPos('Encoder Pixle Value','image', encoderPixleValue)
+    
+    #detect if there has been a new encoder spot detected:
+    if encodeSpotDark and encoderPixleValue > encoderPixleUpperThreshold + encoderPixleDebounce:
+        encodeSpotDark = False
+        numberOfEncodeSpotsDetected += 1
+        cv2.setTrackbarPos('Number Of Encode Spots Detected','image', numberOfEncodeSpotsDetected)
+        
 
+    if  not encodeSpotDark and encoderPixleValue < encoderPixleLowerThreshold - encoderPixleDebounce:
+        encodeSpotDark = True
+        #numberOfEncodeSpotsDetected += 1
+        cv2.setTrackbarPos('Number Of Encode Spots Detected','image', numberOfEncodeSpotsDetected)
+        
+
+    
     
 
 # DISPLAY THE FRAME
@@ -168,17 +212,24 @@ while(True):
 
     
     if firstLoop:
+        time.sleep(0)
         cv2.setTrackbarPos('Brightness','image', 500)
         cv2.setTrackbarPos('Contrast','image', 500)
         #cv2.setTrackbarPos('Saturation','image', 0) # why dose this cause a Segmentation Fault?
         cv2.setTrackbarPos('Hue','image', 500)
         cv2.setTrackbarPos('Gain','image', 500)
+        cv2.setTrackbarPos('Encoder Pixle Debounce','image', 50)
+        cv2.setTrackbarPos('Encoder Pixle Lower Threshold','image', 370)
+        cv2.setTrackbarPos('Encoder Pixle Upper Threshold','image', 400)
         print 'first loop'
         captureXResolution = cap.get(3)
         captureYResolution = cap.get(4)
 
     if firstLoop:
         firstLoop = False
+
+   # encoderPixleValue = 500
+    
 
 cap.release()
 cv2.destroyAllWindows()
