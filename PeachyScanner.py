@@ -10,6 +10,8 @@ def xyPicker(event,x,y,flags,param):
         
 
 
+
+
 ########## setup track ball window #############
 
 def nothing(x):
@@ -44,6 +46,12 @@ def setGain(x):
     print(x, something, 'track ball has changed Gain')
     cap.set(14, something)
 
+def setCenterOfRotation(x):
+    global centerOfRotation, captureXResolution
+    centerOfRotation = int(np.interp(x,[0,1000],[0,captureXResolution]))
+    print(x, centerOfRotation, 'track ball has changed center of Rotation')
+    
+
 def setSomething(x):
     something = x*.001
     print(x, something, 'track ball has something')
@@ -64,6 +72,7 @@ cv2.createTrackbar('Contrast','image',0,1000,setContrast)
 cv2.createTrackbar('Satruation','image',0,1000,setSaturation)
 cv2.createTrackbar('Hue','image',0,1000,setHue)
 cv2.createTrackbar('Gain','image',0,1000,setGain)
+cv2.createTrackbar('Center Of Rotation','image',0,1000,setCenterOfRotation)
 cv2.createTrackbar('something','image',0,1000,setSomething)
 
 # create switch for ON/OFF functionality
@@ -90,6 +99,7 @@ growingNumber = 500
 firstLoop = True
 cv2.namedWindow('LiveFeedWindow')
 cv2.setMouseCallback('LiveFeedWindow',xyPicker)
+centerOfRotation = 500
 
 while(True):
    
@@ -115,8 +125,8 @@ while(True):
     saturation = cv2.getTrackbarPos('Saturation','image')
     hue = cv2.getTrackbarPos('Hue','image')
     gain = cv2.getTrackbarPos('Gain','image')
+    somthing = cv2.getTrackbarPos('Center Of Rotation','image')
     somthing = cv2.getTrackbarPos('somthing','image')
-    
     s = cv2.getTrackbarPos(switch,'image')
 
     #cv2.setTrackbarPos('Brightness','image', growingNumber)
@@ -133,6 +143,9 @@ while(True):
     #capture frame-by-frame
     
     ret, frame = cap.read()
+    
+    # Draw center Line:
+    cv2.rectangle(frame,(centerOfRotation-2,5000),(centerOfRotation,0),(0,255,0),-1)
 
     
 
@@ -155,6 +168,9 @@ while(True):
         cv2.setTrackbarPos('Hue','image', 500)
         cv2.setTrackbarPos('Gain','image', 500)
         print 'first loop'
+        captureXResolution = cap.get(3)
+        captureYResolution = cap.get(4)
+
     if firstLoop:
         firstLoop = False
 
