@@ -2,13 +2,18 @@ import numpy as np
 import cv2
 import time as time
 
-def xyPicker(event,x,y,flags,param):
+def xyColorPicker(event,y,x,flags,param):
     
     if event == cv2.EVENT_LBUTTONDOWN:
         print ' mouse clicked at  x',  x, '   y',y
+        #print frame[x,y][2]
+        cv2.setTrackbarPos('R','image', frame[x,y][2])
+        cv2.setTrackbarPos('G','image', frame[x,y][1])
+        cv2.setTrackbarPos('B','image', frame[x,y][0])
         return([x,y])
-        
 
+    
+    
 
 
 
@@ -98,7 +103,7 @@ cap = cv2.VideoCapture(0)
 growingNumber = 500
 firstLoop = True
 cv2.namedWindow('LiveFeedWindow')
-cv2.setMouseCallback('LiveFeedWindow',xyPicker)
+cv2.setMouseCallback('LiveFeedWindow',xyColorPicker)
 centerOfRotation = 500
 
 while(True):
@@ -130,6 +135,7 @@ while(True):
     s = cv2.getTrackbarPos(switch,'image')
 
     #cv2.setTrackbarPos('Brightness','image', growingNumber)
+
 
     if s == 0:
         img[:] = 0
