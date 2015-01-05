@@ -2,9 +2,12 @@ import numpy as np
 import cv2
 import time as time
 
-
-
-
+def xyPicker(event,x,y,flags,param):
+    
+    if event == cv2.EVENT_LBUTTONDOWN:
+        print ' mouse clicked at  x',  x, '   y',y
+        return([x,y])
+        
 
 
 ########## setup track ball window #############
@@ -85,6 +88,8 @@ cap = cv2.VideoCapture(0)
 
 growingNumber = 500
 firstLoop = True
+cv2.namedWindow('LiveFeedWindow')
+cv2.setMouseCallback('LiveFeedWindow',xyPicker)
 
 while(True):
    
