@@ -1,5 +1,8 @@
 import cv2
 import numpy as np
+import os
+import math
+
 
 drawing = False # true if mouse is pressed
 mode = True # if True, draw rectangle. Press 'm' to toggle to curve
