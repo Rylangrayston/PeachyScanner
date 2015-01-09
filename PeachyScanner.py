@@ -76,6 +76,11 @@ def setSomething(x):
     cap.set(10, something)
 
 
+def changeCammera(x):
+    global cap
+    cap = cv2.VideoCapture(x)
+
+
 # Create a black image, a window
 img = np.zeros((100,512,3), np.uint8)
 cv2.namedWindow('image')
@@ -96,6 +101,7 @@ cv2.createTrackbar('Encoder Pixle Debounce','image',0,1000,nothing)
 cv2.createTrackbar('Encoder Pixle Lower Threshold','image',0,1000,nothing)
 cv2.createTrackbar('Encoder Pixle Upper Threshold','image',0,1000,nothing)
 cv2.createTrackbar('Number Of Encode Spots Detected','image',0,1000,nothing)
+cv2.createTrackbar('Use Cammera Number?','image',0,10,changeCammera)
 cv2.createTrackbar('something','image',0,1000,setSomething)
 
 # create switch to turn on or off the data saving 
@@ -241,6 +247,7 @@ while(True):
     encoderPixleDebounce = cv2.getTrackbarPos('Encoder Pixle Debounce','image')
     encoderPixleLowerThreshold = cv2.getTrackbarPos('Encoder Pixle Lower Threshold','image')
     encoderPixleUpperThreshold = cv2.getTrackbarPos('Encoder Pixle Upper Threshold','image')
+    cameraNumber = cv2.getTrackbarPos('Use Cammera Number?','image')
     somthing = cv2.getTrackbarPos('somthing','image')
     
     saveRealTimeDataSwitch = cv2.getTrackbarPos(switch,'image')
