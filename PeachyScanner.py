@@ -136,6 +136,7 @@ encodeSpotDark = True
 numberOfEncodeSpotsDetected = 0
 saveRealTimeData = 0
 firstSaveLoop = True  # we need to know if this is the first loop we will be saving data ... if it is we will reset all the loop counts 
+newEncodeSpot = False
 
 
 ###############################3
@@ -285,13 +286,16 @@ while(True):
     cv2.setTrackbarPos('Encoder Pixle Value','image', encoderPixleValue)    
    
     #detect if there has been a new encoder spot detected:
+    newEncodeSpot = False
     if encodeSpotDark and encoderPixleValue > encoderPixleUpperThreshold + encoderPixleDebounce:
         encodeSpotDark = False
         numberOfEncodeSpotsDetected += 1
+        newEncodeSpot = True
         cv2.setTrackbarPos('Number Of Encode Spots Detected','image', numberOfEncodeSpotsDetected)
     if  not encodeSpotDark and encoderPixleValue < encoderPixleLowerThreshold - encoderPixleDebounce:
         encodeSpotDark = True
-        #numberOfEncodeSpotsDetected += 1
+        numberOfEncodeSpotsDetected += 1
+        newEncodeSpot = True
         cv2.setTrackbarPos('Number Of Encode Spots Detected','image', numberOfEncodeSpotsDetected)
         
 
@@ -347,7 +351,11 @@ while(True):
                 #print(bright_position, ('*' * int(bright_position/20)) )
 
                 if closest_yet < detect_threshold and bright_position > centerOfRotation:
-                    mat[row_number-skip_y, bright_position-skip_y] = (0,250,0)
+                    if newEncodeSpot:
+                         mat[row_number-skip_y, bright_position-skip_y] = (0,250,250)
+                         
+                    else:
+                         mat[row_number-skip_y, bright_position-skip_y] = (0,250,0)
                     
                     if scan_method == 'dolly' or scan_method == 'pan' or scan_method == 'laser_pan' and saveRealTimeData == 1 :
                         file.write('v ' + str(row_number * factor_y) + ' ' + str(bright_position * factor_x * math.cos(angle)) + ' ' + str(pan + (random.random()*.1)) + '\n')
@@ -403,7 +411,7 @@ while(True):
 # DISPLAY THE FRAME
 
     cv2.imshow('LiveFeedWindow', frame)
-    #time.sleep(.2)
+
     #printCammeraSettings()
 
 
@@ -411,6 +419,9 @@ while(True):
     if cv2.waitKey(1) & 0xFF == 27:
         exitScanner()
         break
+
+    if newEncodeSpot:   # only for testing get rid of this soon!
+        time.sleep(.3)
 
     
     if firstLoop:
