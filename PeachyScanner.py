@@ -71,9 +71,10 @@ def setEncoderPixleValue(x):
     pass
 
 def setSomething(x):
-    something = x*.001
-    print(x, something, 'track ball has something')
-    cap.set(10, something)
+    #something = x*.001
+    #print(x, something, 'track ball has something')
+    #cap.set(10, something)
+    pass
 
 
 def changeCammera(x):
@@ -102,7 +103,7 @@ cv2.createTrackbar('Encoder Pixle Lower Threshold','image',0,1000,nothing)
 cv2.createTrackbar('Encoder Pixle Upper Threshold','image',0,1000,nothing)
 cv2.createTrackbar('Number Of Encode Spots Detected','image',0,1000,nothing)
 cv2.createTrackbar('Use Cammera Number?','image',0,10,changeCammera)
-cv2.createTrackbar('something','image',0,1000,setSomething)
+cv2.createTrackbar('Contour Offset','image',0,40,nothing)
 
 # create switch to turn on or off the data saving 
 switch = '0 : toss data \n1 : Save .obj file'
@@ -137,7 +138,7 @@ numberOfEncodeSpotsDetected = 0
 saveRealTimeData = 0
 firstSaveLoop = True  # we need to know if this is the first loop we will be saving data ... if it is we will reset all the loop counts 
 newEncodeSpot = False
-
+cv2.setTrackbarPos('Contour Offset','image',0)
 
 ###############################3
 ##############################
@@ -249,7 +250,7 @@ while(True):
     encoderPixleLowerThreshold = cv2.getTrackbarPos('Encoder Pixle Lower Threshold','image')
     encoderPixleUpperThreshold = cv2.getTrackbarPos('Encoder Pixle Upper Threshold','image')
     cameraNumber = cv2.getTrackbarPos('Use Cammera Number?','image')
-    somthing = cv2.getTrackbarPos('somthing','image')
+    contourOffset = cv2.getTrackbarPos('Contour Offset','image') 
     
     saveRealTimeDataSwitch = cv2.getTrackbarPos(switch,'image')
 
@@ -329,7 +330,7 @@ while(True):
                     rows_scaned += 1
                 pixle_row = []
 
-                for colum_number in range(mat.cols):
+                for colum_number in range(mat.cols- contourOffset ):
                     if colum_number % skip_x == 0:
                         rgb = mat[row_number,colum_number]
                         b, g, r = rgb
@@ -352,10 +353,10 @@ while(True):
 
                 if closest_yet < detect_threshold and bright_position > centerOfRotation:
                     if newEncodeSpot:
-                         mat[row_number-skip_y, bright_position-skip_y] = (0,250,250)
+                         mat[row_number-skip_y, bright_position-skip_y + contourOffset] = (0,250,250)
                          
                     else:
-                         mat[row_number-skip_y, bright_position-skip_y] = (0,250,0)
+                         mat[row_number-skip_y, bright_position-skip_y + contourOffset] = (0,250,0)
                     
                     if scan_method == 'dolly' or scan_method == 'pan' or scan_method == 'laser_pan' and saveRealTimeData == 1 :
                         file.write('v ' + str(row_number * factor_y) + ' ' + str(bright_position * factor_x * math.cos(angle)) + ' ' + str(pan + (random.random()*.1)) + '\n')
@@ -365,7 +366,7 @@ while(True):
                     do_face = True
                                 
                 else:
-                    mat[row_number-skip_y, bright_position-skip_y] = (0,0,250)
+                    mat[row_number-skip_y, bright_position-skip_y + contourOffset] = (0,0,250)
                     if scan_method == 'dolly' or scan_method == 'pan' or scan_method == 'laser_pan' and saveRealTimeData == 1 :
                         file.write('v ' + str(row_number * factor_y ) + ' ' + str(bright_position * factor_x) + ' ' + str(pan + (random.random()*.1)) + '\n')
                     if scan_method == 'spin' and saveRealTimeData == 1 :
