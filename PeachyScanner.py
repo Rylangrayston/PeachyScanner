@@ -104,6 +104,7 @@ cv2.createTrackbar('Encoder Pixle Upper Threshold','image',0,1000,nothing)
 cv2.createTrackbar('Number Of Encode Spots Detected','image',0,1000,nothing)
 cv2.createTrackbar('Use Cammera Number?','image',0,10,changeCammera)
 cv2.createTrackbar('Contour Offset','image',0,40,nothing)
+cv2.createTrackbar('Stop Looking Threshhold','image',0,10000,nothing)
 
 # create switch to turn on or off the data saving 
 switch = '0 : toss data \n1 : Save .obj file'
@@ -139,6 +140,7 @@ saveRealTimeData = 0
 firstSaveLoop = True  # we need to know if this is the first loop we will be saving data ... if it is we will reset all the loop counts 
 newEncodeSpot = False
 cv2.setTrackbarPos('Contour Offset','image',0)
+cv2.setTrackbarPos('Stop Looking Threshhold','image', 100) 
 
 ###############################3
 ##############################
@@ -154,8 +156,8 @@ pan = 0
 #G = 104
 #B = 220
 #amout grid size of points checked in image
-skip_x = 2
-skip_y = 2
+skip_x = 10
+skip_y = 10
 skip_frame = 1
    
 # factor scales the size of the object in output.obj
@@ -176,7 +178,7 @@ rows_scaned = 0
 detect_threshold = 150
 # if the pixle is with in stop_looking_threshold then stop lookin for another one... this stops the scanner from detectign more than
 #one line.
-stop_looking_threshold = 100
+#stop_looking_threshold = 100
 first_row = True
 
 current_row = 0
@@ -184,17 +186,47 @@ current_row = 0
 vert_index = 0
 
 frames_per_revolution = 360
-angle_step = math.pi * 2 / (frames_per_revolution / skip_frame)
+encodeSpotsOnDisk = 50
+#angle_step = math.pi * 2 / (frames_per_revolution / skip_frame)
+angle_step = math.pi * 2 / encodeSpotsOnDisk
 angle = 0
 
 
 
 # adds the differnce between 2 sets of 3 colors. Returns over all differnce which could be between 0 and (255 * 3) 
-def color_dif(r,g,b,R,G,B):
+def lum_dif(r,g,b,R,G,B):
     r_dif = abs(r - R)
     g_dif = abs(g - G)
     b_dif = abs(b - B)
     return(r_dif + g_dif + b_dif)
+
+def color_dif(r,g,b,R,G,B):
+    
+    r,g,b,R,G,B = r+1,g+1,b+1,R+1,G+1,B+1
+    
+    rgRatio = float( r/g)
+    if rgRatio <  1 : rgRatio = float( g/r)
+
+    gbRatio = float( g/b )
+    if rgRatio <  1 : rgRatio = float( b/g)
+
+    rbRatio = float( r/b)
+    if rgRatio <  1 : rgRatio = float( b/r)
+
+
+    RGRatio = float( R/G)
+    if RGRatio <  1 : RGRatio = float( G/R)
+
+    GBRatio = float( G/B )
+    if RGRatio <  1 : RGRatio = float( B/G)
+
+    RBRatio = float( R/B)
+    if RGRatio <  1 : RGRatio = float( B/R)
+     
+    #print abs(rgRatio - RGRatio) + abs(rbRatio - RBRatio) + abs(gbRatio - GBRatio)
+
+    return  (lum_dif(r,g,b,R,G,B) +  200* (abs(rgRatio - RGRatio) + abs(rbRatio - RBRatio) + abs(gbRatio - GBRatio)  ))
+
 
 def exitScanner():
     if saveRealTimeData == 1:
@@ -251,7 +283,8 @@ while(True):
     encoderPixleUpperThreshold = cv2.getTrackbarPos('Encoder Pixle Upper Threshold','image')
     cameraNumber = cv2.getTrackbarPos('Use Cammera Number?','image')
     contourOffset = cv2.getTrackbarPos('Contour Offset','image') 
-    
+    stopLookingThreshhold = cv2.getTrackbarPos('Stop Looking Threshhold','image') 
+
     saveRealTimeDataSwitch = cv2.getTrackbarPos(switch,'image')
 
     #cv2.setTrackbarPos('Brightness','image', growingNumber)
@@ -321,7 +354,7 @@ while(True):
         print'prosesing frame ', frameCount 
         if scan_method == 'dolly' or scan_method == 'pan' or scan_method == 'laser_pan':
             pan += .1
-        if scan_method == 'spin':
+        if scan_method == 'spin' and newEncodeSpot:
             angle += angle_step
         for row_number in range(mat.rows):
             if row_number % skip_y == 0 :
@@ -347,41 +380,41 @@ while(True):
                     if pixle_value < closest_yet:
                         closest_yet = pixle_value
                         bright_position = position
-                        if pixle_value < stop_looking_threshold:
+                        if pixle_value < stopLookingThreshhold:
                             break
                 #print(bright_position, ('*' * int(bright_position/20)) )
 
-                if closest_yet < detect_threshold and bright_position > centerOfRotation:
+                if closest_yet < stopLookingThreshhold and bright_position > centerOfRotation:
                     if newEncodeSpot:
                          mat[row_number-skip_y, bright_position-skip_y + contourOffset] = (0,250,250)
                          
                     else:
                          mat[row_number-skip_y, bright_position-skip_y + contourOffset] = (0,250,0)
                     
-                    if scan_method == 'dolly' or scan_method == 'pan' or scan_method == 'laser_pan' and saveRealTimeData == 1 :
+                    if scan_method == 'dolly' or scan_method == 'pan' or scan_method == 'laser_pan' and saveRealTimeData == 1 and newEncodeSpot:
                         file.write('v ' + str(row_number * factor_y) + ' ' + str(bright_position * factor_x * math.cos(angle)) + ' ' + str(pan + (random.random()*.1)) + '\n')
-                    if scan_method == 'spin' and saveRealTimeData == 1:
+                    if scan_method == 'spin' and saveRealTimeData == 1 and newEncodeSpot:
                         file.write('v ' + str(((bright_position - centerOfRotation) ) * math.cos(angle) ) + ' ' + str(row_number * factor_z)+ ' ' + str((bright_position -centerOfRotation ) * math.sin(angle) ) + '\n')
                         #print('spining')
                     do_face = True
                                 
                 else:
                     mat[row_number-skip_y, bright_position-skip_y + contourOffset] = (0,0,250)
-                    if scan_method == 'dolly' or scan_method == 'pan' or scan_method == 'laser_pan' and saveRealTimeData == 1 :
+                    if scan_method == 'dolly' or scan_method == 'pan' or scan_method == 'laser_pan' and saveRealTimeData == 1 and newEncodeSpot :
                         file.write('v ' + str(row_number * factor_y ) + ' ' + str(bright_position * factor_x) + ' ' + str(pan + (random.random()*.1)) + '\n')
-                    if scan_method == 'spin' and saveRealTimeData == 1 :
+                    if scan_method == 'spin' and saveRealTimeData == 1 and newEncodeSpot :
                         file.write('v ' + str(((bright_position - centerOfRotation) ) * math.cos(angle) ) + ' ' + str(row_number * factor_z + 20 )+ ' ' + str((bright_position - centerOfRotation) * math.sin(angle) ) + '\n')
                             
                     do_face = False
                           
-                if saveRealTimeData == 1:
+                if saveRealTimeData == 1 and newEncodeSpot:
                     vert_index += 1
                 if not first_frame:
-                    if first_row and do_face and saveRealTimeData == 1 :
+                    if first_row and do_face and saveRealTimeData == 1 and newEncodeSpot :
                         face = 'f ' + str(vert_index) + ' ' + str(vert_index - rows_scaned) + ' ' + str(vert_index - rows_scaned + 1) + '\n'
                         faces = faces + face
 
-                    if not first_row and current_row != rows_scaned and do_face and saveRealTimeData == 1:
+                    if not first_row and current_row != rows_scaned and do_face and saveRealTimeData == 1 and newEncodeSpot:
                         face = 'f ' + str(vert_index) + ' ' + str(vert_index - rows_scaned) + ' ' + str(vert_index - rows_scaned + 1) + '\n'
                         faces = faces + face
                         face = 'f ' + str(vert_index) + ' ' + str(vert_index - rows_scaned) + ' ' + str(vert_index - 1) + '\n'

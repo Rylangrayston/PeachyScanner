@@ -1,6 +1,6 @@
 commit 
 
-add cammera choser
+----------------------------------------------------add cammera choser 
 
 add 3d veiwer .. pix in circle 
 math.cos(degFromRadians(degreesLineWasScannedAt) ))
@@ -14,7 +14,11 @@ add line of pixles to detect on encoder
 
 add encoder graph ... maby not
 
-make encoder triger the processing of a frame. 
+--------------------------------------------------------------------make encoder triger the processing of a frame. 
 
 check into useing the mlt format that blender exports along with and object 
+
+record usefull vidoe file 
+
+
 
