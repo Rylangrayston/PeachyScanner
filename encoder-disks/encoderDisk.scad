@@ -1,5 +1,5 @@
-numberOfSlots = 50;
-slotAngle = 45;
+numberOfSlots = 100;
+slotAngle = 0;
 slotLength = 30;
 shaftHole = 3;
 
