@@ -1,12 +1,12 @@
-numberOfSlots = 100;
+numberOfSlots = 50;
 slotAngle = 0;
-slotLength = 30;
+slotLength = 30/2;
 shaftHole = 3;
 
 diskThickness = 3;
 diskDiameter = 150;
 diskCercumference = 100 * 3.14;
-slotWidth = diskCercumference / numberOfSlots/2;
+slotWidth = diskCercumference / numberOfSlots/1.6;
 resolution = 50;
 
 
@@ -19,7 +19,7 @@ module cutSlots()
 		rotate(slotVector)
 		translate([0,diskDiameter/2-(slotLength/2),-.5])
 		rotate(slotAngle)
-		cube([slotWidth,slotLength,diskThickness+1]);
+		cube([slotWidth,slotLength,diskThickness+1], center = true);
 		}
 }
 
